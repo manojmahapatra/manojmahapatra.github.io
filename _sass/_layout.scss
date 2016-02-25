@@ -2,19 +2,19 @@
  * Site header
  */
 .site-header {
-    border-top: 5px solid $grey-color-dark;
     border-bottom: 1px solid $grey-color-light;
     min-height: 56px;
-
+    background-color: $grey-color-ultralight;
     // Positioning context for the mobile navigation icon
     position: relative;
 }
 
 .site-title {
+    font-family: 'droid_serifregular', Arial, sans-serif;
     font-size: 26px;
     font-weight: 300;
     line-height: 56px;
-    letter-spacing: -1px;
+    letter-spacing: -1.5px;
     margin-bottom: 0;
     float: left;
 
@@ -24,16 +24,17 @@
     }
 }
 
-.site-nav {
+.site-nav {    
     float: right;
     line-height: 56px;
+    letter-spacing: -1px;
 
     .menu-icon {
         display: none;
     }
 
     .page-link {
-        color: $text-color;
+        color: $menu-color;
         line-height: $base-line-height;
 
         // Gaps between nav items, but not on the last one
@@ -100,6 +101,7 @@
 .site-footer {
     border-top: 1px solid $grey-color-light;
     padding: $spacing-unit 0;
+    background-color: $grey-color-ultralight;
 }
 
 .footer-heading {
@@ -113,9 +115,16 @@
     margin-left: 0;
 }
 
+.contact_icon {
+    color: $grey-color-dark;
+    margin-right: 8px;
+}
+
 .footer-col-wrapper {
-    font-size: 15px;
-    color: $grey-color;
+    font-family: $secondary-font-family;
+    font-size: 14px;
+    font-weight: 100;
+    color: $grey-color-dark;
     margin-left: -$spacing-unit / 2;
     @extend %clearfix;
 }
@@ -127,8 +136,8 @@
 }
 
 .footer-col-1 {
-    width: -webkit-calc(35% - (#{$spacing-unit} / 2));
-    width:         calc(35% - (#{$spacing-unit} / 2));
+    width: -webkit-calc(70% - (#{$spacing-unit} / 2));
+    width:         calc(70% - (#{$spacing-unit} / 2));
 }
 
 .footer-col-2 {
@@ -137,8 +146,15 @@
 }
 
 .footer-col-3 {
-    width: -webkit-calc(45% - (#{$spacing-unit} / 2));
-    width:         calc(45% - (#{$spacing-unit} / 2));
+    width: -webkit-calc(10% - (#{$spacing-unit} / 2));
+    width:         calc(10% - (#{$spacing-unit} / 2));
+    list-style: none;
+}
+
+.license {
+    font-family: $secondary-font-family;
+    font-size: 12px;
+    color: $grey-color-dark;
 }
 
 @include media-query($on-laptop) {
@@ -172,7 +188,9 @@
 }
 
 .page-heading {
-    font-size: 20px;
+    font-size: 30px;
+    font-family: $secondary-font-family;
+    margin-top: $spacing-unit;
 }
 
 .post-list {
@@ -180,17 +198,26 @@
     list-style: none;
 
     > li {
-        margin-bottom: $spacing-unit;
+        margin-bottom: 0;
+        margin-top: 0;
     }
 }
 
+.links-list {
+    margin-left: 0;
+    list-style: none;    
+}
+
 .post-meta {
+    font-family: $secondary-font-family;
     font-size: $small-font-size;
     color: $grey-color;
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
 .post-link {
-    display: block;
+    display: inline;
     font-size: 24px;
 }
 
@@ -215,10 +242,17 @@
 
 .post-content {
     margin-bottom: $spacing-unit;
+    /*$spacing-unit * 2*/
+    h1 {
+        font-size: 32px;
+        text-align: center;
+        @include media-query($on-laptop) {
+            font-size: 28px;
+        }
+    }
 
     h2 {
         font-size: 32px;
-
         @include media-query($on-laptop) {
             font-size: 28px;
         }
@@ -226,7 +260,6 @@
 
     h3 {
         font-size: 26px;
-
         @include media-query($on-laptop) {
             font-size: 22px;
         }
@@ -234,9 +267,63 @@
 
     h4 {
         font-size: 20px;
-
         @include media-query($on-laptop) {
             font-size: 18px;
         }
     }
+
+    h2, h3 {
+        margin-top: $spacing-unit * 2;
+        margin-bottom: $spacing-unit / 2;
+    }
+
+    h4 {
+        margin-top: $spacing-unit / 2;
+        margin-bottom: 10px;
+    }
+
+    p {
+        margin-top: 5px;
+    }
+}
+
+/**
+ * Image wrapper
+ */
+
+.image-wrapper {
+    text-align: center;
+
+    .image-caption {
+        font-family: $secondary-font-family;
+        color: $grey-color;
+        margin-top: $spacing-unit / 3;
+    }
+}
+
+/**
+ * Page navigation
+ */
+.page-navigation {
+    margin-top: 0;
+    font-size: 16px;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+}
+
+.page-navigation a {
+  display: block;
+  width: 50%;
+  float: left;
+  margin: 1em 0;
+}
+
+.page-navigation .prev {
+  float: left;
+  text-align: left;
+}
+.page-navigation .next {
+  text-align: right;
+  float: right;
 }
