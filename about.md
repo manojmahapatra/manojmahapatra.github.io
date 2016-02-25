@@ -23,4 +23,4 @@ Subscribe to <a href="{{ "/feed.xml" | prepend: site.baseurl }}">RSS feed</a> to
 
 ## About This Site
 
-This site is created with <span class = "icon icon_github">{% include icon-github.svg %}<i class="fa fa-github"></i> [jekyll](https://github.com/jekyll/jekyll), and you can see the <span class = "icon icon_github">{% include icon-github.svg %}<i class="fa fa-github"></i> [source](https://github.com/manojmahapatra/manojmahapatra.github.io).
+This site is created with <span class = "icon icon_github"><i class="fa fa-github"></i> [jekyll](https://github.com/jekyll/jekyll), and you can see the <span class = "icon icon_github"><i class="fa fa-github"></i> [source](https://github.com/manojmahapatra/manojmahapatra.github.io).

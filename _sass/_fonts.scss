@@ -1,0 +1,21 @@
+@font-face {
+    font-family: 'droid_serifbold';
+    src: url('../fonts/droidserif_bold/DroidSerif-Bold-webfont.eot');
+    src: url('../fonts/droidserif_bold/DroidSerif-Bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/droidserif_bold/DroidSerif-Bold-webfont.woff') format('woff'),
+         url('../fonts/droidserif_bold/DroidSerif-Bold-webfont.ttf') format('truetype'),
+         url('../fonts/droidserif_bold/DroidSerif-Bold-webfont.svg#droid_serifbold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'droid_serifregular';
+    src: url('../fonts/droidserif_regular/DroidSerif-Regular-webfont.eot');
+    src: url('../fonts/droidserif_regular/DroidSerif-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/droidserif_regular/DroidSerif-Regular-webfont.woff') format('woff'),
+         url('../fonts/droidserif_regular/DroidSerif-Regular-webfont.ttf') format('truetype'),
+         url('../fonts/droidserif_regular/DroidSerif-Regular-webfont.svg#droid_serifregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
