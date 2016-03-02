@@ -2,7 +2,7 @@
 layout: post
 title:  "Git Tips"
 date:   2016-03-01 13:40:05
-categories: swift
+categories: Git
 ---
 
 > Some useful git tips for everyday use.
