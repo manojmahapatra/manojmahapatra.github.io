@@ -7,11 +7,17 @@ tags: [swift, ios, arrays]
 
 Swift 6.2 ships with `InlineArray`, a fixed-size array type that's been years in the making. If you've ever wished for C-style `T[N]` arrays but with Swift's safety guarantees, this is it.
 
-I've been following [SE-0453](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0453-vector.md) since its pitch phase, and I think it's one of the most important additions to the standard library for performance-critical code.
+[SE-0453](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0453-vector.md) is one of the most important additions to the standard library for performance-critical code.
 
-## The Problem with Array
+## Why We Need InlineArray
 
-`Array` is heap-allocated and growable. That's great for general use, but expensive when you know exactly how many elements you need:
+Swift's `Array` is excellent for general use, but it comes with hidden costs:
+
+- **Heap allocation** - Every `Array` allocates memory on the heap, even for small fixed collections
+- **Reference counting** - Array's backing storage is reference-counted, adding retain/release overhead
+- **Indirection** - Accessing elements requires following a pointer to heap storage
+
+For most apps, this is fine. But in performance-critical code - game engines, audio processing, embedded systems, tight loops - these costs add up.
 
 ```swift
 func processPixel() {
@@ -36,9 +42,7 @@ func processPixel() {
 
 Tuples don't support subscripting or iteration. You're stuck with `.0`, `.1`, `.2`, `.3`.
 
-## Enter InlineArray
-
-`InlineArray` gives you fixed-size, stack-allocated storage with full indexing and iteration:
+`InlineArray` solves both problems - inline storage with full indexing and iteration:
 
 ```swift
 func processPixel() {
@@ -50,13 +54,13 @@ func processPixel() {
 }
 ```
 
-No heap allocation. No reference counting. Just bytes on the stack.
+No heap allocation. No reference counting. The storage is laid out inline - on the stack for local variables, or inline within a struct/class for properties.
 
 ## The Generic Signature
 
-The type signature is `InlineArray<Count, Element>` - count comes first. This might seem backwards if you're coming from C++ (`std::array<T, N>`), but it reads naturally: "an InlineArray of 4 integers."
+The type signature is `InlineArray<Count, Element>` - count comes first. This reads naturally: "an InlineArray of 4 integers."
 
-It also makes multi-dimensional arrays intuitive:
+Multi-dimensional arrays are intuitive too:
 
 ```swift
 // A 3x4 matrix
@@ -69,8 +73,6 @@ let matrix: InlineArray<3, InlineArray<4, Float>> = [
 // Access as matrix[row][col] - matches the declaration order
 let value = matrix[2][3]
 ```
-
-Compare this to C where `float[4][3]` is indexed as `[row][col]` but declared in reverse order. Swift's approach is cleaner.
 
 ## Memory Layout
 
@@ -104,13 +106,13 @@ let inferred: InlineArray = [1, 2, 3]  // InlineArray<3, Int>
 **Closure-based** (great for computed values):
 
 ```swift
-// Index-based initialization
+// Index-based initialization (note: no argument label)
 let squares = InlineArray<5, Int> { i in i * i }
 // [0, 1, 4, 9, 16]
 
 // Chain from previous element
-let fibonacci = InlineArray<10, Int>(first: 1) { prev in 
-    prev + 1  // Simplified - real Fibonacci needs two previous values
+let values = InlineArray<10, Int>(first: 1) { prev in 
+    prev * 2
 }
 ```
 
@@ -122,7 +124,7 @@ let zeros = InlineArray<100, Int>(repeating: 0)
 
 ## Noncopyable Elements
 
-Here's where it gets interesting. `InlineArray` supports noncopyable types:
+`InlineArray` supports noncopyable types:
 
 ```swift
 let atomics: InlineArray<4, Atomic<Int>> = [
@@ -139,11 +141,15 @@ let mutexes = InlineArray<3, Mutex<Data>> { _ in
 
 This is huge for systems programming. You can have a fixed-size array of atomics, mutexes, or file handles without heap allocation.
 
-## What's Missing (Intentionally)
+## Why No Sequence or Collection?
 
-**No `Sequence` or `Collection` conformance.** This is deliberate. Unlike `Array`, `InlineArray` has no copy-on-write semantics - it's eagerly copied. Conforming to `Collection` would enable implicit copies through slicing and generic algorithms, which defeats the purpose of a stack-allocated type.
+This is deliberate and important to understand. Unlike `Array`, `InlineArray` is **eagerly copied** - there's no copy-on-write. The Language Steering Group specifically chose the name "Inline" to highlight this performance characteristic.
 
-Instead, use `indices`:
+From the [acceptance discussion](https://forums.swift.org/t/accepted-with-modifications-se-0453-inlinearray-formerly-vector-a-fixed-size-array/77678):
+
+> Top of mind for the Language Steering Group was the behavior of this type regarding copies: namely, that this type is eagerly copied rather than being copy-on-write which carries substantial performance implications.
+
+Conforming to `Collection` would enable implicit copies through slicing and generic algorithms, which defeats the purpose. Instead, use `indices`:
 
 ```swift
 let data: InlineArray<1000, Float> = ...
@@ -153,64 +159,60 @@ for i in data.indices {
 }
 ```
 
-**No `Equatable`, `Hashable` yet.** These require the element to be copyable, and the Swift team wants to wait until these protocols are generalized for noncopyable types.
+## Primitives: Span Integration
 
-**No `Span` API yet.** [SE-0447 Span](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0447-span-access-shared-contiguous-storage.md) defines safe contiguous storage access, but lifetime annotations aren't ready. Coming soon.
-
-## Real-World Use Cases
-
-**SIMD-friendly data:**
+A lesser-known feature: `InlineArray` exposes `.span` and `.mutableSpan` properties from [SE-0447](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0447-span-access-shared-contiguous-storage.md) - safe, bounds-checked access to the underlying memory without copying:
 
 ```swift
-struct Particle {
-    var position: InlineArray<3, Float>
-    var velocity: InlineArray<3, Float>
-    var color: InlineArray<4, UInt8>
-}
+func processBuffer(_ span: Span<Float>) { ... }
+
+var data: InlineArray<1024, Float> = ...
+processBuffer(data.span)  // Zero-copy view into the array
 ```
 
-**Fixed-size buffers:**
+This bridges `InlineArray` to APIs working with contiguous memory - crucial for C/C++ interop without dropping to `UnsafeBufferPointer`.
+
+## Must Be Fully Occupied
+
+An `InlineArray` must always be fully initialized. You cannot have 2 elements in an `InlineArray<3, Int>` - all 3 slots must contain values.
+
+## C Interop - Not Yet
+
+If you were hoping `InlineArray` would fix C array interop (importing `char[16]` as `InlineArray<16, CChar>` instead of a tuple), that's been **deferred** pending further design work.
+
+## When Should You Use InlineArray?
+
+`InlineArray` is a specialized tool, not a replacement for `Array`. For most application code, `Array` remains the right choice.
+
+**Use InlineArray when:**
+
+- **Zero heap allocation needed** - embedded systems, real-time audio, game loops
+- **Size is fixed at compile time** - RGB pixels, 3D vectors, matrix dimensions
+- **Building low-level data structures** - cache-friendly layouts, framework internals
+- **Noncopyable element storage** - arrays of atomics, mutexes, file handles
 
 ```swift
-struct UUIDBytes {
-    let bytes: InlineArray<16, UInt8>
+// Good: fixed-size math types
+struct Vector3 {
+    var values: InlineArray<3, Float>
 }
-```
 
-**Embedded systems** where heap allocation isn't available:
-
-```swift
+// Good: embedded sensor buffer
 struct SensorReadings {
     var samples: InlineArray<64, Int16>
-    var timestamps: InlineArray<64, UInt32>
 }
+
+// Good: noncopyable elements
+let locks = InlineArray<4, Mutex<Data>> { _ in Mutex(Data()) }
 ```
 
-## The Name Story
+**Stick with Array when:**
 
-The proposal originally called this type `Vector`, matching the mathematical term (fixed magnitude). But after community feedback, it was renamed to `InlineArray` to be more descriptive of its behavior - it's an array that's allocated inline with its container.
+- Size is dynamic or unknown
+- You need `append()`, `filter()`, `map()`, or other Collection APIs
+- API ergonomics matter more than allocation cost
+- You're writing typical application code
 
-Interestingly, this means Swift's naming is the opposite of C++: Swift's `Array` is growable (like C++'s `std::vector`), and Swift's `InlineArray` is fixed-size (like C++'s `std::array`).
+The overhead of `Array` is negligible for most apps. Reach for `InlineArray` when profiling shows allocation is a bottleneck, or when you're in a domain (embedded, audio, games) where it matters by default.
 
-## Future Directions
-
-The proposal outlines several planned additions:
-
-- **Syntax sugar** like `[4 x Int]` or `Int[4]`
-- **`FixedCapacityArray`** - fixed capacity but variable count (append/remove supported)
-- **`SmallArray`** - inline storage with heap fallback when it grows
-- **C interop** - importing C arrays as `InlineArray` instead of tuples
-
-## Try It Now
-
-`InlineArray` is available in Swift 6.2. If you're doing performance-sensitive work, embedded development, or just want predictable memory layout, give it a try.
-
-```swift
-// Before: heap allocation, reference counting
-let old: [Int] = [1, 2, 3, 4]
-
-// After: stack allocation, zero overhead
-let new: InlineArray<4, Int> = [1, 2, 3, 4]
-```
-
-The full proposal is worth reading: [SE-0453 InlineArray](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0453-vector.md).
+The full proposal: [SE-0453 InlineArray](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0453-vector.md).
