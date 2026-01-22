@@ -34,8 +34,8 @@ export const SITE: Site = {
   website: "https://manojmahapatra.github.io/",
   author: "Manoj Mahapatra",
   profile: "https://manojmahapatra.github.io/about",
-  desc: "iOS Engineer. Swift, React Native, React. Writing about iOS development and the tools I use.",
-  title: "Manoj Mahapatra",
+  desc: "iOS Engineer. Swift, Bazel, Monorepos. Writing about iOS development and build systems.",
+  title: "hey.mahapmanoj",
   ogImage: "og-image.jpg",
   lightAndDarkMode: true,
   postPerIndex: 10,
@@ -75,7 +75,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
     label: "GitHub",
   },
   {
-    href: "https://twitter.com/0manoj1",
+    href: "https://x.com/mahapmanoj",
     label: "Twitter",
   },
   {
