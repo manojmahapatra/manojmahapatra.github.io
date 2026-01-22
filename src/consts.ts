@@ -35,7 +35,7 @@ export const SITE: Site = {
   author: "Manoj Mahapatra",
   profile: "https://manojmahapatra.github.io/about",
   desc: "iOS Engineer. Swift, Bazel, Monorepos. Writing about iOS development and build systems.",
-  title: "hey.mahapmanoj",
+  title: "Manoj Mahapatra",
   ogImage: "og-image.jpg",
   lightAndDarkMode: true,
   postPerIndex: 10,
