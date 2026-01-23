@@ -213,7 +213,7 @@ export default async (post) => {
                             type: "span",
                             props: {
                               style: { overflow: "hidden", fontWeight: "bold" },
-                              children: "steipete.me",
+                              children: "manojmahapatra.github.io",
                             },
                           },
                         ],
@@ -231,7 +231,7 @@ export default async (post) => {
       width: 1200,
       height: 630,
       embedFont: true,
-      fonts: await loadGoogleFonts(post.data.title + post.data.author + "steipete.me" + "by"),
+      fonts: await loadGoogleFonts(post.data.title + post.data.author + "manojmahapatra.github.io" + "by"),
     }
   );
 };
