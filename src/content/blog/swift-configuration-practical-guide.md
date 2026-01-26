@@ -1,8 +1,8 @@
 ---
 title: "Swift Configuration: A Practical Guide"
 description: "Using Apple's swift-configuration library for debug settings, feature flags, and environment-based configuration."
-pubDate: 2026-01-26
-tags: ["swift", "ios", "configuration", "swift-6"]
+pubDatetime: 2026-01-26T00:00:00Z
+tags: [swift, ios, configuration, swift-6]
 ---
 
 Apple shipped [swift-configuration](https://github.com/apple/swift-configuration) with Swift 6. I'd been rolling my own config loading, so I figured I'd see what the official solution looks like.
