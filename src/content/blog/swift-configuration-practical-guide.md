@@ -9,7 +9,7 @@ Apple shipped [swift-configuration](https://github.com/apple/swift-configuration
 
 ## The Basic Idea
 
-The library separates readers from providers. You read config through `ConfigReader`, and where the values come from is someone else's problem:
+The library separates readers from providers. You read config through `ConfigReader`, and providers supply the actual values:
 
 ```swift
 let config = ConfigReader(providers: [
@@ -17,10 +17,13 @@ let config = ConfigReader(providers: [
     try await FileProvider<JSONSnapshot>(filePath: "config.json")
 ])
 
-let timeout = config.int(forKey: "http.timeout", default: 30)
+// Reads TIMEOUT env var (uppercase), or "timeout" from config.json, or 30
+let timeout = config.int(forKey: "timeout", default: 30)
 ```
 
-Providers are checked in order. Environment variable wins if set, otherwise JSON, otherwise the default. Pretty standard stuff.
+Same pattern works for `string`, `bool`, `double`, and arrays.
+
+Providers are checked in the order you list them. In the example above, environment variable wins if set, then JSON file, then the fallback value you pass to `default:`.
 
 The library also supports YAML via the `YAML` trait. There's also a community [TOML provider](https://github.com/finnvoor/swift-configuration-toml).
 
@@ -28,7 +31,7 @@ I built a [plist provider](https://github.com/manojmahapatra/swift-configuration
 
 ## A Demo
 
-Wrapping related config in structs:
+Here's a pattern for organizing config: wrap related settings in a struct that reads from a scoped config reader.
 
 ```swift
 struct DebugSettings {
@@ -45,7 +48,7 @@ struct DebugSettings {
 
 `scoped(to:)` lets you write `forKey: "networkDelay"` instead of `forKey: "debug.networkDelay"`.
 
-JSON has the defaults, environment variables override for testing:
+Your JSON file holds the baseline values. Override them with environment variables for testing:
 
 ```bash
 DEBUG_OFFLINE_MODE=true swift run
