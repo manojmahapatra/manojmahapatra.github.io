@@ -48,7 +48,7 @@ struct DebugSettings {
 
 `scoped(to:)` lets you write `forKey: "networkDelay"` instead of `forKey: "debug.networkDelay"`.
 
-Your JSON file holds the baseline values. Override them with environment variables for testing:
+Your config file holds the baseline values. Override them with environment variables for testing:
 
 ```bash
 DEBUG_OFFLINE_MODE=true swift run
