@@ -12,13 +12,15 @@ Apple shipped [swift-configuration](https://github.com/apple/swift-configuration
 The library separates readers from providers. You read config through `ConfigReader`, and providers supply the actual values:
 
 ```swift
-let config = ConfigReader(providers: [
+import Configuration
+
+let config = try await ConfigReader(providers: [
     EnvironmentVariablesProvider(),
-    try await FileProvider<JSONSnapshot>(filePath: "config.json")
+    FileProvider<JSONSnapshot>(filePath: "config.json")
 ])
 
 // Reads TIMEOUT env var (uppercase), or "timeout" from config.json, or 30
-let timeout = config.int(forKey: "timeout", default: 30)
+let timeoutSeconds = config.int(forKey: "timeout", default: 30)
 ```
 
 Same pattern works for `string`, `bool`, `double`, and arrays.
@@ -41,35 +43,45 @@ struct DebugSettings {
         self.config = config.scoped(to: "debug")
     }
     
+    // Reads DEBUG_NETWORK_DELAY env var, or "networkDelay" under "debug" in config, or 0
     var networkDelay: Int { config.int(forKey: "networkDelay", default: 0) }
     var offlineMode: Bool { config.bool(forKey: "offlineMode", default: false) }
+}
+
+// Usage
+let debug = DebugSettings(config: config)
+if debug.networkDelay > 0 {
+    try await Task.sleep(for: .milliseconds(debug.networkDelay))
 }
 ```
 
 `scoped(to:)` lets you write `forKey: "networkDelay"` instead of `forKey: "debug.networkDelay"`.
 
-Your config file holds the baseline values. Override them with environment variables for testing:
+Your config file holds the baseline values. Override with environment variables:
 
 ```bash
-DEBUG_OFFLINE_MODE=true swift run
+# From terminal - sets debug.networkDelay to 500ms
+DEBUG_NETWORK_DELAY=500 swift run
 ```
 
-Feature flags work the same way. Ship with features off, flip via environment, update JSON when ready.
+In Xcode: Scheme → Run → Arguments → Environment Variables.
 
-## The Xcode Thing
+## Multiple Readers
 
-Running from Xcode, the working directory isn't your project root. `FileProvider` won't find your config file.
-
-Fix: bundle it as a resource:
+Multiple readers can share a provider, or use separate providers for different files:
 
 ```swift
-.executableTarget(
-    name: "MyApp",
-    resources: [.copy("config.json")]
-)
-```
+// Shared provider
+let provider = try await FileProvider<JSONSnapshot>(filePath: "config.json")
+let debug = ConfigReader(provider: provider).scoped(to: "debug")
+let api = ConfigReader(provider: provider).scoped(to: "api")
 
-Then load via `Bundle.module.path(forResource:ofType:)`.
+// Separate providers
+let appProvider = try await FileProvider<JSONSnapshot>(filePath: "app.json")
+let featuresProvider = try await FileProvider<JSONSnapshot>(filePath: "features.json")
+let app = ConfigReader(provider: appProvider)
+let features = ConfigReader(provider: featuresProvider)
+```
 
 ## Hot Reloading
 
@@ -78,6 +90,13 @@ This is where it got interesting. `ReloadingFileProvider` watches for file chang
 Turns out the provider implements `Service` from [swift-service-lifecycle](https://github.com/swift-server/swift-service-lifecycle). You have to run it in a `ServiceGroup` or the polling never starts:
 
 ```swift
+import Configuration
+import Logging
+import ServiceLifecycle
+
+let configPath = "config.json"
+let logger = Logger(label: "hot-reload")
+
 let provider = try await ReloadingFileProvider<JSONSnapshot>(
     filePath: configPath,
     pollInterval: .seconds(1)
@@ -101,6 +120,8 @@ try await withThrowingTaskGroup(of: Void.self) { group in
 Edit the JSON while it's running and the new value prints within a second. Useful for server config without restarts.
 
 One gotcha: I tried `watchInt` first, which should watch a specific key. The watchers never registered. `watchSnapshot` works fine. I didn't dig into why—life's too short.
+
+Full working examples: [swift-configuration-demo](https://github.com/manojmahapatra/swift-configuration-demo)
 
 ## Links
 
