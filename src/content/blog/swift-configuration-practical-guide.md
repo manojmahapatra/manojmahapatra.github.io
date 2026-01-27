@@ -9,7 +9,7 @@ Apple shipped [swift-configuration](https://github.com/apple/swift-configuration
 
 ## The Basic Idea
 
-The library separates readers from providers. You read config through `ConfigReader`, and providers supply the actual values:
+It's a new library that provides a unified approach to reading configuration in Swift applications. The library separates readers from providers—you read config through `ConfigReader`, and providers supply the actual values:
 
 ```swift
 import Configuration
@@ -31,7 +31,7 @@ The library also supports YAML via the `YAML` trait. There's also a community [T
 
 I built a [plist provider](https://github.com/manojmahapatra/swift-configuration-plist) for Apple platform apps. Plist has native `Data` support, so no base64 encoding needed for binary config values.
 
-## A Demo
+## A Simple Demo
 
 Here's a pattern for organizing config: wrap related settings in a struct that reads from a scoped config reader.
 
@@ -57,7 +57,7 @@ if debug.networkDelay > 0 {
 
 `scoped(to:)` lets you write `forKey: "networkDelay"` instead of `forKey: "debug.networkDelay"`.
 
-Your config file holds the baseline values. Override with environment variables:
+Your config file holds the baseline values. Environment variables override them:
 
 ```bash
 # From terminal - sets debug.networkDelay to 500ms
@@ -85,7 +85,7 @@ let features = ConfigReader(provider: featuresProvider)
 
 ## Hot Reloading
 
-This is where it got interesting. `ReloadingFileProvider` watches for file changes. I assumed it would just work. It did not just work.
+This is where it got interesting. `ReloadingFileProvider` watches for file changes. I assumed I could just swap `FileProvider` for `ReloadingFileProvider` and be done. Not quite.
 
 Turns out the provider implements `Service` from [swift-service-lifecycle](https://github.com/swift-server/swift-service-lifecycle). You have to run it in a `ServiceGroup` or the polling never starts:
 
@@ -121,7 +121,9 @@ Edit the JSON while it's running and the new value prints within a second. Usefu
 
 One gotcha: I tried `watchInt` first, which should watch a specific key. The watchers never registered. `watchSnapshot` works fine. I didn't dig into why—life's too short.
 
-Full working examples: [swift-configuration-demo](https://github.com/manojmahapatra/swift-configuration-demo)
+Full working examples are in the [demo repo](https://github.com/manojmahapatra/swift-configuration-demo).
+
+The library has more [advanced capabilities](https://forums.swift.org/t/introducing-swift-configuration/82368#p-378107-advanced-capabilities-2)—access logging and secret redaction—that I'll cover in a future post.
 
 ## Links
 
