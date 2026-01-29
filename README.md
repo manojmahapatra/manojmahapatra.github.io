@@ -1,6 +1,6 @@
 # manojmahapatra.github.io
 
-Personal blog built with [Astro](https://astro.build), based on [steipete.me](https://github.com/steipete/steipete.me).
+Personal blog built with [Astro](https://astro.build).
 
 ## Commands
 
