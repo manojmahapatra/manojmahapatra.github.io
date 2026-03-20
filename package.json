@@ -52,7 +52,8 @@
   "overrides": {
     "esbuild": "^0.25.5",
     "vite": "^6.3.5",
-    "fast-xml-parser": "^5.3.4"
+    "fast-xml-parser": "^5.3.4",
+    "h3": "^1.15.6"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
