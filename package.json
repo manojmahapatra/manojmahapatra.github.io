@@ -8,7 +8,7 @@
     "build:check": "astro check && astro build && pagefind --site dist",
     "preview": "astro preview",
     "astro": "astro",
-    "deploy": "scripts/deploy.sh",
+    "deploy": "npm run build && wrangler deploy",
     "add-source-metadata": "node scripts/add-source-metadata.mjs",
     "remove-tags": "node scripts/remove-tags-from-posts.mjs",
     "sync": "astro sync",
@@ -51,7 +51,8 @@
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
-    "postcss": "^8.5.6"
+    "postcss": "^8.5.6",
+    "wrangler": "4.111.0"
   },
   "config": {
     "commitizen": {
