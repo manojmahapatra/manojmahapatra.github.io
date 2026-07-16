@@ -1,8 +1,17 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
+import { z } from "astro/zod";
 import { SITE } from "@/config";
 
 export const BLOG_PATH = "src/content/blog";
+
+const httpsUrl = z.url().refine(
+  (value) => {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password;
+  },
+  { message: "URL must use HTTPS and must not contain credentials" }
+);
 
 const blog = defineCollection({
   loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: `./${BLOG_PATH}` }),
@@ -19,7 +28,7 @@ const blog = defineCollection({
       ogImage: image().or(z.string()).optional(),
       heroImage: z.string().optional(),
       description: z.string(),
-      canonicalURL: z.string().optional(),
+      canonicalURL: httpsUrl.optional(),
       hideEditPost: z.boolean().optional(),
       timezone: z.string().optional(),
       // Additional fields from existing posts

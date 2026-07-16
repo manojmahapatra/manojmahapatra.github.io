@@ -1,8 +1,7 @@
 ---
-import { ViewTransitions } from "astro:transitions";
 import { SITE } from "@/config";
 import "@/styles/global.css";
-import Analytics from "@/components/Analytics.astro";
+import { serializeJsonForHtml } from "@/utils/security.mjs";
 
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 
@@ -37,7 +36,7 @@ const structuredData = {
   "@type": "BlogPosting",
   headline: `${title}`,
   image: `${socialImageURL}`,
-  datePublished: `${pubDatetime?.toISOString()}`,
+  ...(pubDatetime && { datePublished: pubDatetime.toISOString() }),
   ...(modDatetime && { dateModified: modDatetime.toISOString() }),
   author: [
     {
@@ -47,17 +46,19 @@ const structuredData = {
     },
   ],
 };
+
+const serializedStructuredData = serializeJsonForHtml(structuredData);
 ---
 
 <!doctype html>
-<html lang=`${SITE.lang ?? "en"}` class={`${scrollSmooth && "scroll-smooth"}`}>
+<html lang={SITE.lang ?? "en"} class:list={{ "scroll-smooth": scrollSmooth }}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <meta name="view-transition" content="same-origin" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="canonical" href={canonicalURL} />
     <meta name="generator" content={Astro.generator} />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <!-- General Meta Tags -->
     <title>{title}</title>
@@ -101,7 +102,7 @@ const structuredData = {
     <script
       type="application/ld+json"
       is:inline
-      set:html={JSON.stringify(structuredData)}
+      set:html={serializedStructuredData}
     />
 
     <!-- Enable RSS feed auto-discovery  -->
@@ -127,16 +128,10 @@ const structuredData = {
       )
     }
 
-    <ViewTransitions />
-
-    <script is:inline src="/toggle-theme.js"></script>
-    
-    <!-- Twitter Widget Script -->
-    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
   </head>
   <body>
+    <script is:inline src="/toggle-theme.js"></script>
     <slot />
-    <Analytics />
   </body>
 </html>
 

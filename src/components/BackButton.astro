@@ -27,11 +27,13 @@ import LinkButton from "./LinkButton.astro";
 
     const backUrl = sessionStorage.getItem("backUrl");
 
-    if (backUrl && backButton) {
-      backButton.href = backUrl;
+    if (!backUrl || !backButton) return;
+
+    const candidate = new URL(backUrl, window.location.origin);
+    if (candidate.origin === window.location.origin) {
+      backButton.href = `${candidate.pathname}${candidate.search}${candidate.hash}`;
     }
   }
 
-  document.addEventListener("astro:page-load", updateGoBackUrl);
   updateGoBackUrl();
 </script>

@@ -116,10 +116,7 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
     ]}
     data-pagefind-body
   >
-    <h1
-      transition:name={slugifyStr(title)}
-      class="inline-block text-2xl font-bold text-accent sm:text-3xl"
-    >
+    <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl">
       {title}
     </h1>
     <div class="flex items-center justify-between gap-4 mt-2 mb-6">
@@ -216,7 +213,7 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
   <Footer />
 </Layout>
 
-<script is:inline data-astro-rerun>
+<script>
   /** Create a progress indicator
    *  at the top */
   function createProgressBar() {
@@ -226,9 +223,11 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
       "progress-container fixed top-0 z-10 h-1 w-full bg-background";
 
     // Create the progress bar div
-    const progressBar = document.createElement("div");
-    progressBar.className = "progress-bar h-1 w-0 bg-accent";
+    const progressBar = document.createElement("progress");
+    progressBar.className = "progress-bar h-1 w-full";
     progressBar.id = "myBar";
+    progressBar.max = 100;
+    progressBar.value = 0;
 
     // Append the progress bar to the progress container
     progressContainer.appendChild(progressBar);
@@ -249,9 +248,9 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
         document.documentElement.clientHeight;
       const scrolled = (winScroll / height) * 100;
       if (document) {
-        const myBar = document.getElementById("myBar");
+        const myBar = document.getElementById("myBar") as HTMLProgressElement | null;
         if (myBar) {
-          myBar.style.width = scrolled + "%";
+          myBar.value = Number.isFinite(scrolled) ? scrolled : 0;
         }
       }
     });
@@ -288,12 +287,12 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
 
     for (const codeBlock of codeBlocks) {
       const wrapper = document.createElement("div");
-      wrapper.style.position = "relative";
+      wrapper.classList.add("relative");
 
       const copyButton = document.createElement("button");
       copyButton.className =
         "copy-code absolute right-3 -top-3 rounded bg-muted px-2 py-1 text-xs leading-4 text-foreground font-medium";
-      copyButton.innerHTML = copyButtonLabel;
+      copyButton.textContent = copyButtonLabel;
       codeBlock.setAttribute("tabindex", "0");
       codeBlock.appendChild(copyButton);
 
@@ -306,7 +305,7 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
       });
     }
 
-    async function copyCode(block, button) {
+    async function copyCode(block: HTMLPreElement, button: HTMLButtonElement) {
       const code = block.querySelector("code");
       const text = code?.innerText;
 
@@ -332,11 +331,6 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
   }
   backToTop();
 
-  /* Go to page start after page swap */
-  document.addEventListener("astro:after-swap", () =>
-    window.scrollTo({ left: 0, top: 0, behavior: "instant" }),
-  );
-
   /** Add lazy loading to all images in the article */
   function addLazyLoading() {
     const article = document.querySelector("#article");
@@ -359,7 +353,7 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
     
     document.addEventListener('keydown', (e) => {
       // Ignore if user is typing in an input, textarea, or contenteditable
-      if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
+      if (e.target instanceof Element && e.target.matches('input, textarea, [contenteditable="true"]')) return;
       
       // J key for next post
       if (e.key === 'j' && nextUrl) {
@@ -373,120 +367,30 @@ const wordCount = (post.body ?? "").split(/\s+/).length;
   }
   setupKeyboardNavigation();
 
-  /** Process YouTube and Twitter embeds */
-  function processEmbeds() {
-    const article = document.querySelector("#article");
-    if (!article) return;
+</script>
 
-    // Look for YouTube embeds
-    const youtubeEmbedRegex = /\{% youtube (https:\/\/[^\s]+|[a-zA-Z0-9_-]+) %\}/g;
-    
-    let foundYoutubeEmbeds = false;
-    
-    // Helper to extract a YouTube video ID from various URL formats
-    const extractYouTubeId = (input) => {
-      let videoId = input;
-      try {
-        if (videoId.includes("youtube.com/watch")) {
-          const url = new URL(videoId);
-          videoId = url.searchParams.get("v") || "";
-        } else if (videoId.includes("youtu.be/")) {
-          videoId = videoId.split("youtu.be/")[1]?.split("?")[0] || "";
-        } else if (videoId.includes("youtube.com/embed/")) {
-          videoId = videoId.split("youtube.com/embed/")[1]?.split("?")[0] || "";
-        }
-      } catch (_) {
-        // If URL parsing fails, fall back to the raw input
-      }
-      return videoId;
-    };
+<script>
+  import { processEmbeds } from "@/scripts/processEmbeds";
 
-    // 1) Pre-pass: replace whole-paragraph shortcodes (most common case)
-    const pNodes = article.querySelectorAll("p");
-    pNodes.forEach((p) => {
-      const text = (p.textContent || "").trim();
-      const ytMatch = text.match(/\{% youtube (https:\/\/[^\s]+|[a-zA-Z0-9_-]+) %\}/);
-
-      if (ytMatch && ytMatch[1]) {
-        foundYoutubeEmbeds = true;
-        const videoId = extractYouTubeId(ytMatch[1]);
-        const container = document.createElement("div");
-        container.className = "youtube-embed-container";
-        container.innerHTML = `
-          <iframe
-            width="560"
-            height="315"
-            src="https://www.youtube.com/embed/${videoId}"
-            title="YouTube video player"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        `;
-        p.replaceWith(container);
-      }
-    });
-
-    // 2) Fallback: process any remaining text nodes that still contain shortcodes
-    const walker = document.createTreeWalker(
-      article,
-      NodeFilter.SHOW_TEXT,
-      null,
-      false,
-    );
-
-    const textNodes = [];
-    let node;
-    while ((node = walker.nextNode())) {
-      textNodes.push(node);
-    }
-
-    textNodes.forEach((textNode) => {
-      let content = textNode.textContent;
-      let hasChanges = false;
-
-      // Process YouTube embeds
-      content = content.replace(youtubeEmbedRegex, (match, videoId) => {
-        foundYoutubeEmbeds = true;
-        hasChanges = true;
-        videoId = extractYouTubeId(videoId);
-
-        return `<div class="youtube-embed-container">
-            <iframe
-              width="560"
-              height="315"
-              src="https://www.youtube.com/embed/${videoId}"
-              title="YouTube video player"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-            ></iframe>
-          </div>`;
-      });
-
-      if (hasChanges) {
-        // Replace the text node with HTML content
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = content;
-
-        // Replace the text node with the new HTML elements
-        const parent = textNode.parentNode;
-        while (tempDiv.firstChild) {
-          parent.insertBefore(tempDiv.firstChild, textNode);
-        }
-        parent.removeChild(textNode);
-      }
-    });
-  }
-
-  // Run the embed processing
   processEmbeds();
-  
-  // Also run after astro navigation
-  document.addEventListener("astro:page-load", processEmbeds);
 </script>
 
 <style>
+  .progress-bar {
+    appearance: none;
+    border: 0;
+    color: var(--accent);
+  }
+
+  .progress-bar::-webkit-progress-bar {
+    background: var(--background);
+  }
+
+  .progress-bar::-webkit-progress-value,
+  .progress-bar::-moz-progress-bar {
+    background: var(--accent);
+  }
+
   .youtube-embed-container {
     margin: 2rem 0;
     position: relative;

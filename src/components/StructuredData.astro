@@ -4,6 +4,8 @@ export interface Props {
   data: any;
 }
 
+import { serializeJsonForHtml } from "@/utils/security.mjs";
+
 const { type, data } = Astro.props;
 
 let structuredData = {};
@@ -69,6 +71,8 @@ if (type === "BlogPosting") {
     },
   };
 }
+
+const serializedStructuredData = serializeJsonForHtml(structuredData);
 ---
 
-<script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+<script type="application/ld+json" is:inline set:html={serializedStructuredData} />
