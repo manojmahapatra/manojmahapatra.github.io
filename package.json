@@ -52,7 +52,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "postcss": "^8.5.26",
-    "wrangler": "4.123.0"
+    "wrangler": "4.156.0"
   },
   "config": {
     "commitizen": {
